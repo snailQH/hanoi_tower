@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>汉诺塔游戏 Patrick</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            text-align: center;
+            max-width: 800px;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 100px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2980b9;
+            margin-top: 5px;
+        }
+
+        select, button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        select {
+            background-color: white;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .towers-container {
+            display: flex;
+            justify-content: space-around;
+            height: 320px;
+            position: relative;
+            margin-top: auto;
+        }
+
+        .tower {
+            position: relative;
+            width: 200px;
+            height: 320px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .rod {
+            position: absolute;
+            width: 20px;
+            height: 280px;
+            background-color: #7f8c8d;
+            bottom: 0;
+            border-radius: 10px 10px 0 0;
+            z-index: 1;
+        }
+
+        .base {
+            position: absolute;
+            width: 180px;
+            height: 20px;
+            background-color: #7f8c8d;
+            bottom: 0;
+            border-radius: 5px;
+            z-index: 1;
+        }
+
+        .disk {
+            height: 30px;
+            border-radius: 15px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            transition: transform 0.3s;
+            z-index: 2;
+            cursor: grab;
+        }
+
+        .disk:hover {
+            transform: translateY(-5px);
+        }
+
+        .disk.dragging {
+            opacity: 0.8;
+            transform: scale(1.05);
+            cursor: grabbing;
+        }
+
+        .labels {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .tower-label {
+            font-weight: bold;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #27ae60;
+            color: white;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #e74c3c;
+            color: white;
+            display: block;
+        }
+
+        .help {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            max-width: 800px;
+        }
+
+        .help h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .help ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-top: 0;
+        }
+
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        @media (max-width: 850px) {
+            .game-container {
+                width: 95%;
+                height: auto;
+            }
+            
+            .towers-container {
+                height: 280px;
+            }
+            
+            .tower {
+                width: 30%;
+            }
+            
+            .rod {
+                height: 240px;
+            }
+        }
+
+        /* 添加名字输入表单样式 */
+        .player-form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .player-form input {
+            padding: 10px;
+            width: 100%;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .player-form button {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .player-info {
+            background-color: #2980b9;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-right: auto;
+            display: none; /* 初始隐藏 */
+        }
+
+        /* 增强移动设备响应式样式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .description {
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+            
+            .player-form {
+                max-width: 90%;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .player-info {
+                width: 100%;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+            
+            .stats {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .stat {
+                min-width: 80px;
+                flex: 1;
+            }
+            
+            .game-container {
+                width: 100%;
+                height: 300px;
+                padding: 10px;
+            }
+            
+            .towers-container {
+                height: 250px;
+            }
+            
+            .rod {
+                height: 210px;
+                width: 15px;
+            }
+            
+            .base {
+                width: 140px;
+                height: 15px;
+            }
+            
+            .disk {
+                height: 25px;
+                border-radius: 12px;
+                font-size: 12px;
+            }
+            
+            .tower-label {
+                font-size: 16px;
+            }
+            
+            .help {
+                font-size: 14px;
+                padding: 10px;
+            }
+            
+            .help ul {
+                padding-left: 15px;
+            }
+            
+            .modal-content {
+                width: 90%;
+                padding: 20px;
+                max-width: none;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .modal-buttons button {
+                width: 100%;
+            }
+        }
+
+        /* 针对更小的手机屏幕 */
+        @media (max-width: 480px) {
+            .stat {
+                padding: 5px 10px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+            
+            .disk {
+                height: 20px;
+                font-size: 10px;
+                margin-bottom: 3px;
+            }
+            
+            /* 调整盘子的最大宽度，确保在小屏幕上能适应 */
+            .mobile-disk-adjust {
+                max-width: 100px !important;
+            }
+        }
+        
+        /* 添加触摸操作样式 */
+        .disk.selected {
+            transform: translateY(-10px);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 增加移动端操作提示 */
+        .mobile-hint {
+            display: none;
+            text-align: center;
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-hint {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>汉诺塔游戏</h1>
+    
+    <!-- 添加玩家名字输入表单 -->
+    <div id="playerForm" class="player-form">
+        <h3>请输入你的名字</h3>
+        <input type="text" id="playerNameInput" placeholder="请输入你的名字" maxlength="20">
+        <button id="startGameButton">开始游戏</button>
+    </div>
+    
+    <div class="description">
+        <p>汉诺塔是一个著名的数学游戏或谜题，包含三根杆和多个直径各不相同的圆盘。游戏的目标是将所有圆盘从最左边的杆移动到最右边的杆，遵循以下规则：</p>
+        <p>1. 每次只能移动一个圆盘；2. 每次移动只能将最顶端的圆盘移至另一根杆；3. 不能将大圆盘放在小圆盘上面。</p>
+    </div>
+
+    <div class="controls">
+        <!-- 添加玩家信息显示 -->
+        <div id="playerInfo" class="player-info">
+            玩家: <span id="playerNameDisplay">匿名</span>
+        </div>
+        
+        <div>
+            <label for="disksCount">选择盘子数量:</label>
+            <select id="disksCount">
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+            </select>
+        </div>
+        <button id="resetBtn">重新开始</button>
+        <button id="autoSolveBtn">自动求解</button>
+        <button id="undoBtn" disabled>撤销</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <span>当前步数</span>
+            <span id="moveCount" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+            <span>最佳步数</span>
+            <span id="optimalMoves" class="stat-value">7</span>
+        </div>
+        <div class="stat">
+            <span>游戏时间</span>
+            <span id="timer" class="stat-value">00:00</span>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="towers-container">
+            <div class="tower" id="tower1">
+                <div class="rod"></div>
+                <div class="base"></div>
+                <!-- 圆盘将在JS中动态生成 -->
+            </div>
+            <div class="tower" id="tower2">
+                <div class="rod"></div>
+                <div class="base"></div>
+            </div>
+            <div class="tower" id="tower3">
+                <div class="rod"></div>
+                <div class="base"></div>
+            </div>
+        </div>
+        <div class="labels">
+            <div class="tower-label">A</div>
+            <div class="tower-label">B</div>
+            <div class="tower-label">C</div>
+        </div>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div class="help">
+        <h3>游戏说明:</h3>
+        <ul>
+            <li>点击并拖动圆盘可以移动它。</li>
+            <li>只有最顶部的圆盘可以被移动。</li>
+            <li>较大的圆盘不能放在较小的圆盘上。</li>
+            <li>你的目标是将所有圆盘从左侧杆移动到右侧杆。</li>
+            <li>尝试用最少的步数完成！（最少步数是 2<sup>n</sup>-1，其中n是盘子数）</li>
+        </ul>
+    </div>
+
+    <!-- 添加移动端操作提示 -->
+    <div class="mobile-hint">
+        <p>📱 触摸操作提示: 先点击要移动的柱子，再点击目标柱子</p>
+    </div>
+
+    <div id="victoryModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">恭喜 <span id="victoryPlayerName">你</span>！成功了！</h2>
+            <p><span id="victoryPlayerName2">你</span>用了 <span id="finalMoves">0</span> 步完成了汉诺塔挑战！</p>
+            <p>用时: <span id="finalTime">00:00</span></p>
+            <p id="performanceMessage"></p>
+            <div class="modal-buttons">
+                <button id="newGameBtn">新游戏</button>
+                <button id="increaseDisksBtn">增加难度</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态变量
+        let disksCount = 3;
+        let towers = [[], [], []];
+        let moveCount = 0;
+        let optimalMoves = 7; // 最佳步数 (2^n - 1)
+        let gameStarted = false;
+        let startTime = null;
+        let timerInterval = null;
+        let isDragging = false;
+        let selectedDisk = null;
+        let selectedTower = null;
+        let moveHistory = [];
+        let autoSolveInProgress = false;
+        let playerName = "匿名"; // 添加玩家名字变量
+        
+        // DOM元素
+        const playerFormEl = document.getElementById('playerForm');
+        const playerNameInputEl = document.getElementById('playerNameInput');
+        const startGameButtonEl = document.getElementById('startGameButton');
+        const playerInfoEl = document.getElementById('playerInfo');
+        const playerNameDisplayEl = document.getElementById('playerNameDisplay');
+        const victoryPlayerNameEl = document.getElementById('victoryPlayerName');
+        const victoryPlayerName2El = document.getElementById('victoryPlayerName2');
+        const disksCountSelect = document.getElementById('disksCount');
+        const resetBtn = document.getElementById('resetBtn');
+        const autoSolveBtn = document.getElementById('autoSolveBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const moveCountEl = document.getElementById('moveCount');
+        const optimalMovesEl = document.getElementById('optimalMoves');
+        const timerEl = document.getElementById('timer');
+        const messageEl = document.getElementById('message');
+        const tower1El = document.getElementById('tower1');
+        const tower2El = document.getElementById('tower2');
+        const tower3El = document.getElementById('tower3');
+        const towerEls = [tower1El, tower2El, tower3El];
+        const victoryModal = document.getElementById('victoryModal');
+        const finalMovesEl = document.getElementById('finalMoves');
+        const finalTimeEl = document.getElementById('finalTime');
+        const performanceMessageEl = document.getElementById('performanceMessage');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const increaseDisksBtn = document.getElementById('increaseDisksBtn');
+        const gameContainerEl = document.querySelector('.game-container');
+        const statsEl = document.querySelector('.stats');
+        
+        // 初始隐藏游戏元素
+        gameContainerEl.style.display = 'none';
+        statsEl.style.display = 'none';
+
+        // 处理名字提交和游戏开始
+        startGameButtonEl.addEventListener('click', function() {
+            // 获取玩家名字并去除两端空格
+            playerName = playerNameInputEl.value.trim();
+            
+            // 如果没有输入名字，使用默认值
+            if (!playerName) {
+                playerName = "匿名玩家";
+            }
+            
+            // 更新显示的玩家名字
+            playerNameDisplayEl.textContent = playerName;
+            
+            // 隐藏表单，显示游戏元素
+            playerFormEl.style.display = 'none';
+            gameContainerEl.style.display = 'flex';
+            statsEl.style.display = 'flex';
+            playerInfoEl.style.display = 'block';
+            
+            // 初始化游戏
+            initGame();
+        });
+        
+        // 初始化游戏
+        function initGame() {
+            // 重置变量
+            moveCount = 0;
+            towers = [[], [], []];
+            moveHistory = [];
+            gameStarted = false;
+            autoSolveInProgress = false;
+            clearInterval(timerInterval);
+            startTime = null;
+            
+            // 更新UI
+            moveCountEl.textContent = '0';
+            timerEl.textContent = '00:00';
+            messageEl.className = 'message';
+            messageEl.textContent = '';
+            undoBtn.disabled = true;
+            
+            // 清空塔
+            towerEls.forEach(tower => {
+                // 保留杆和底座
+                const rod = tower.querySelector('.rod');
+                const base = tower.querySelector('.base');
+                tower.innerHTML = '';
+                tower.appendChild(rod);
+                tower.appendChild(base);
+            });
+            
+            // 生成盘子
+            disksCount = parseInt(disksCountSelect.value);
+            optimalMoves = Math.pow(2, disksCount) - 1;
+            optimalMovesEl.textContent = optimalMoves;
+            
+            // 检测是否为移动端，并调整盘子最大宽度
+            const isMobile = window.innerWidth < 768;
+            
+            const maxWidth = isMobile ? 110 : 160; // 移动端缩小最大盘子宽度
+            const minWidth = isMobile ? 35 : 40;   // 略微调整最小宽度
+            const widthStep = (maxWidth - minWidth) / (disksCount - 1 || 1);
+            
+            const colors = [
+                '#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', 
+                '#3498db', '#9b59b6', '#1abc9c', '#34495e'
+            ];
+            
+            for (let i = disksCount; i > 0; i--) {
+                const disk = document.createElement('div');
+                disk.className = 'disk';
+                if (isMobile) {
+                    disk.classList.add('mobile-disk-adjust');
+                }
+                const width = maxWidth - (disksCount - i) * widthStep;
+                disk.style.width = width + 'px';
+                disk.style.backgroundColor = colors[(disksCount - i) % colors.length];
+                disk.dataset.size = i;
+                disk.textContent = i;
+                
+                // 添加拖拽事件
+                disk.draggable = true;
+                disk.addEventListener('dragstart', dragStart);
+                disk.addEventListener('dragend', dragEnd);
+                
+                // 添加到第一个塔并更新数据模型
+                tower1El.appendChild(disk);
+                towers[0].push(i);
+            }
+
+            // 添加拖放事件到塔
+            towerEls.forEach((tower, index) => {
+                tower.addEventListener('dragover', (e) => dragOver(e, index));
+                tower.addEventListener('drop', (e) => drop(e, index));
+            });
+
+            autoSolveBtn.disabled = false;
+        }
+
+        // 拖拽相关函数
+        function dragStart(e) {
+            if (autoSolveInProgress) return;
+
+            const tower = e.target.parentElement;
+            const towerIndex = Array.from(towerEls).indexOf(tower);
+            
+            // 检查是否是顶层圆盘
+            const diskElements = tower.querySelectorAll('.disk');
+            if (diskElements[diskElements.length - 1] !== e.target) {
+                e.preventDefault();
+                showMessage('只能移动顶部的圆盘！', 'error');
+                return;
+            }
+
+            if (!gameStarted) {
+                startGame();
+            }
+
+            e.target.classList.add('dragging');
+            selectedDisk = e.target;
+            selectedTower = towerIndex;
+            
+            // 设置拖动图像（可选）
+            const dragImage = e.target.cloneNode(true);
+            dragImage.style.opacity = '0.5';
+            document.body.appendChild(dragImage);
+            e.dataTransfer.setDragImage(dragImage, 50, 50);
+            setTimeout(() => {
+                document.body.removeChild(dragImage);
+            }, 0);
+        }
+
+        function dragEnd(e) {
+            e.target.classList.remove('dragging');
+            selectedDisk = null;
+        }
+
+        function dragOver(e, towerIndex) {
+            e.preventDefault();
+        }
+
+        function drop(e, targetTowerIndex) {
+            e.preventDefault();
+            if (selectedDisk === null || autoSolveInProgress) return;
+            
+            const sourceTowerIndex = selectedTower;
+            moveDisk(sourceTowerIndex, targetTowerIndex);
+        }
+
+        // 移动圆盘
+        function moveDisk(fromTower, toTower) {
+            if (fromTower === toTower) return;
+            
+            // 检查源塔是否有盘子
+            if (towers[fromTower].length === 0) {
+                showMessage('选择的塔没有圆盘！', 'error');
+                return;
+            }
+            
+            // 获取要移动的盘子大小
+            const diskSize = towers[fromTower][towers[fromTower].length - 1];
+            
+            // 检查目标塔是否可以放置
+            if (towers[toTower].length > 0 && towers[toTower][towers[toTower].length - 1] < diskSize) {
+                showMessage('不能将大圆盘放在小圆盘上！', 'error');
+                return;
+            }
+            
+            // 记录移动历史
+            moveHistory.push({from: fromTower, to: toTower, diskSize: diskSize});
+            undoBtn.disabled = false;
+            
+            // 更新数据模型
+            const movedDisk = towers[fromTower].pop();
+            towers[toTower].push(movedDisk);
+            
+            // 更新UI
+            const diskElement = towerEls[fromTower].querySelector('.disk:last-child');
+            towerEls[fromTower].removeChild(diskElement);
+            towerEls[toTower].appendChild(diskElement);
+            
+            // 更新步数
+            moveCount++;
+            moveCountEl.textContent = moveCount;
+            
+            // 检查胜利条件
+            if (towers[2].length === disksCount) {
+                setTimeout(showVictory, 500);
+            }
+        }
+
+        // 撤销上一步
+        function undoMove() {
+            if (moveHistory.length === 0 || autoSolveInProgress) return;
+            
+            const lastMove = moveHistory.pop();
+            if (moveHistory.length === 0) {
+                undoBtn.disabled = true;
+            }
+            
+            // 更新数据模型
+            const diskSize = towers[lastMove.to].pop();
+            towers[lastMove.from].push(diskSize);
+            
+            // 更新UI
+            const diskElement = towerEls[lastMove.to].querySelector('.disk:last-child');
+            towerEls[lastMove.to].removeChild(diskElement);
+            towerEls[lastMove.from].appendChild(diskElement);
+            
+            // 更新步数
+            moveCount--;
+            moveCountEl.textContent = moveCount;
+        }
+
+        // 自动求解
+        async function autoSolve() {
+            if (!gameStarted) {
+                startGame();
+            }
+            
+            autoSolveInProgress = true;
+            autoSolveBtn.disabled = true;
+            undoBtn.disabled = true;
+            resetBtn.disabled = true;
+            disksCountSelect.disabled = true;
+            
+            // 重置游戏到初始状态
+            while (moveHistory.length > 0) {
+                undoMove();
+            }
+            
+            // 递归求解汉诺塔
+            await solveHanoiAnimation(disksCount, 0, 2, 1);
+            
+            autoSolveInProgress = false;
+            resetBtn.disabled = false;
+            disksCountSelect.disabled = false;
+        }
+
+        // 汉诺塔递归求解（带动画）
+        async function solveHanoiAnimation(n, source, target, auxiliary) {
+            if (n === 1) {
+                await animateMove(source, target);
+                return;
+            }
+            
+            await solveHanoiAnimation(n-1, source, auxiliary, target);
+            await animateMove(source, target);
+            await solveHanoiAnimation(n-1, auxiliary, target, source);
+        }
+
+        // 带延迟的移动动画
+        function animateMove(fromTower, toTower) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    moveDisk(fromTower, toTower);
+                    resolve();
+                }, 300); // 调整延迟时间可以改变动画速度
+            });
+        }
+
+        // 开始游戏计时
+        function startGame() {
+            gameStarted = true;
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // 更新计时器
+        function updateTimer() {
+            if (!startTime) return;
+            
+            const currentTime = new Date();
+            const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            
+            timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // 显示消息
+        function showMessage(text, type = '') {
+            messageEl.textContent = text;
+            messageEl.className = 'message';
+            if (type) {
+                messageEl.classList.add(type);
+            }
+            
+            setTimeout(() => {
+                messageEl.className = 'message';
+            }, 3000);
+        }
+
+        // 显示胜利模态框
+        function showVictory() {
+            clearInterval(timerInterval);
+            
+            // 更新胜利模态框中的玩家名字
+            victoryPlayerNameEl.textContent = playerName;
+            victoryPlayerName2El.textContent = playerName;
+            
+            finalMovesEl.textContent = moveCount;
+            finalTimeEl.textContent = timerEl.textContent;
+            
+            // 根据性能计算评价
+            const perfRatio = moveCount / optimalMoves;
+            let perfMessage = '';
+            
+            if (perfRatio === 1) {
+                perfMessage = '太棒了！' + playerName + '达到了理论最少步数！';
+                createConfetti();
+            } else if (perfRatio < 1.2) {
+                perfMessage = '出色的表现！' + playerName + '非常接近最优解！';
+            } else if (perfRatio < 1.5) {
+                perfMessage = '不错的尝试！再接再厉！';
+            } else if (perfRatio < 2) {
+                perfMessage = playerName + '已经完成了挑战，但还有改进的空间！';
+            } else {
+                perfMessage = '挑战成功！多练习可以减少移动次数！';
+            }
+            
+            performanceMessageEl.textContent = perfMessage;
+            victoryModal.style.display = 'flex';
+        }
+
+        // 创建胜利时的五彩纸屑效果
+        function createConfetti() {
+            const colors = ['#f44336', '#2196f3', '#ffeb3b', '#4caf50', '#9c27b0', '#ff9800'];
+            const confettiCount = 200;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    // 随机位置
+                    const startX = Math.random() * window.innerWidth;
+                    confetti.style.left = startX + 'px';
+                    confetti.style.top = '-10px';
+                    
+                    // 随机大小
+                    const size = Math.random() * 10 + 5;
+                    confetti.style.width = size + 'px';
+                    confetti.style.height = size + 'px';
+                    
+                    document.body.appendChild(confetti);
+                    
+                    // 添加随机动画
+                    const animationDuration = Math.random() * 3 + 2;
+                    confetti.style.transition = `all ${animationDuration}s ease-out`;
+                    
+                    setTimeout(() => {
+                        confetti.style.top = window.innerHeight + 'px';
+                        confetti.style.left = (parseInt(confetti.style.left) + (Math.random() * 200 - 100)) + 'px';
+                        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                        
+                        // 移除元素
+                        setTimeout(() => {
+                            document.body.removeChild(confetti);
+                        }, animationDuration * 1000);
+                    }, 10);
+                }, Math.random() * 1500);
+            }
+        }
+
+        // 事件监听器
+        disksCountSelect.addEventListener('change', initGame);
+        resetBtn.addEventListener('click', function() {
+            if (confirm("重新开始游戏？")) {
+                const changeNameToo = confirm("是否同时更换玩家姓名？");
+                if (changeNameToo) {
+                    // 显示名字输入框
+                    gameContainerEl.style.display = 'none';
+                    statsEl.style.display = 'none';
+                    playerInfoEl.style.display = 'none';
+                    playerFormEl.style.display = 'block';
+                    playerNameInputEl.value = playerName;
+                } else {
+                    initGame();
+                }
+            }
+        });
+        autoSolveBtn.addEventListener('click', autoSolve);
+        undoBtn.addEventListener('click', undoMove);
+        newGameBtn.addEventListener('click', () => {
+            victoryModal.style.display = 'none';
+            initGame();
+        });
+        increaseDisksBtn.addEventListener('click', () => {
+            victoryModal.style.display = 'none';
+            const nextValue = Math.min(parseInt(disksCountSelect.value) + 1, 8);
+            disksCountSelect.value = nextValue;
+            initGame();
+        });
+
+        // 移动端触摸事件支持
+        towerEls.forEach((tower, towerIndex) => {
+            tower.addEventListener('touchstart', (e) => {
+                if (autoSolveInProgress) return;
+                
+                // 如果已经选中了一个盘子，尝试放置
+                if (selectedDisk) {
+                    moveDisk(selectedTower, towerIndex);
+                    selectedDisk = null;
+                    selectedTower = null;
+                    return;
+                }
+                
+                // 否则，尝试选择一个盘子
+                const disks = tower.querySelectorAll('.disk');
+                if (disks.length === 0) return;
+                
+                const topDisk = disks[disks.length - 1];
+                topDisk.classList.add('dragging');
+                selectedDisk = topDisk;
+                selectedTower = towerIndex;
+                
+                if (!gameStarted) {
+                    startGame();
+                }
+                
+                e.preventDefault(); // 防止滚动
+            });
+        });
+
+        // 添加窗口大小调整处理
+        window.addEventListener('resize', function() {
+            // 重新调整游戏布局
+            const isMobile = window.innerWidth < 768;
+            const disks = document.querySelectorAll('.disk');
+            
+            if (isMobile) {
+                disks.forEach(disk => disk.classList.add('mobile-disk-adjust'));
+            } else {
+                disks.forEach(disk => disk.classList.remove('mobile-disk-adjust'));
+            }
+        });
+
+        // 修改victoryModal关闭方法以适应移动端
+        document.addEventListener('touchstart', function(e) {
+            if (e.target === victoryModal) {
+                victoryModal.style.display = 'none';
+                initGame();
+            }
+        });
+
+        // 优化移动端加载体验
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检测是否为移动设备
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // 针对移动设备的额外优化
+                document.body.classList.add('mobile-device');
+                
+                // 阻止双击缩放
+                document.addEventListener('dblclick', function(e) {
+                    e.preventDefault();
+                }, { passive: false });
+                
+                // 禁用页面缩放
+                document.addEventListener('touchmove', function(e) {
+                    if (e.scale !== 1) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+        });
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
