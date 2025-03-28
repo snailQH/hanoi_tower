@@ -458,6 +458,32 @@
                 display: block;
             }
         }
+
+        .disk.touch-dragging {
+            position: absolute;
+            z-index: 1000;
+            opacity: 0.8;
+            transform: scale(1.05);
+            transition: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        
+        /* 触摸时的反馈效果 */
+        .tower.tower-highlight {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-radius: 10px;
+        }
+        
+        /* 可以放置的指示 */
+        .tower.can-drop {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+        
+        /* 不可放置的指示 */
+        .tower.cannot-drop {
+            background-color: rgba(231, 76, 60, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -1085,6 +1111,205 @@
 
         // 初始化游戏
         initGame();
+
+        // 触摸拖拽相关变量
+        let touchDragging = false;
+        let touchDragDisk = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let originalTower = null;
+        let originalPosition = { top: 0, left: 0 };
+        let lastTouchedTower = null;
+
+        // 主脚本底部添加触摸拖拽相关功能
+        function initTouchDragEvents() {
+            // 移除现有的触摸事件监听器
+            towerEls.forEach(tower => {
+                tower.removeEventListener('touchstart', tower._touchHandler);
+            });
+            
+            // 添加触摸开始事件
+            towerEls.forEach((tower, towerIndex) => {
+                tower.addEventListener('touchstart', function(e) {
+                    if (autoSolveInProgress) return;
+                    
+                    // 如果已经在拖动中，忽略
+                    if (touchDragging) return;
+                    
+                    const rect = tower.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    const x = touch.clientX - rect.left;
+                    const y = touch.clientY - rect.top;
+                    
+                    // 获取塔上的所有盘子
+                    const disks = tower.querySelectorAll('.disk');
+                    if (disks.length === 0) return;
+                    
+                    // 只能移动最顶部的盘子
+                    const topDisk = disks[disks.length - 1];
+                    const diskRect = topDisk.getBoundingClientRect();
+                    
+                    // 检查触摸点是否在顶部盘子上
+                    if (touch.clientX >= diskRect.left && 
+                        touch.clientX <= diskRect.right && 
+                        touch.clientY >= diskRect.top && 
+                        touch.clientY <= diskRect.bottom) {
+                        
+                        // 开始游戏计时（如果还没开始）
+                        if (!gameStarted) {
+                            startGame();
+                        }
+                        
+                        // 记录初始触摸位置和原始塔
+                        touchStartX = touch.clientX;
+                        touchStartY = touch.clientY;
+                        originalTower = towerIndex;
+                        originalPosition = {
+                            top: diskRect.top,
+                            left: diskRect.left
+                        };
+                        
+                        // 创建拖动克隆
+                        touchDragDisk = topDisk.cloneNode(true);
+                        touchDragDisk.classList.add('touch-dragging');
+                        touchDragDisk.style.width = `${diskRect.width}px`;
+                        touchDragDisk.style.left = `${diskRect.left}px`;
+                        touchDragDisk.style.top = `${diskRect.top}px`;
+                        document.body.appendChild(touchDragDisk);
+                        
+                        // 标记拖动状态
+                        touchDragging = true;
+                        
+                        // 高亮原始塔
+                        tower.classList.add('tower-highlight');
+                        
+                        e.preventDefault(); // 防止滚动
+                    }
+                });
+            });
+            
+            // 添加触摸移动事件（全局）
+            document.addEventListener('touchmove', function(e) {
+                if (!touchDragging || !touchDragDisk) return;
+                
+                const touch = e.touches[0];
+                
+                // 计算移动距离
+                const deltaX = touch.clientX - touchStartX;
+                const deltaY = touch.clientY - touchStartY;
+                
+                // 移动克隆的盘子
+                touchDragDisk.style.left = `${originalPosition.left + deltaX}px`;
+                touchDragDisk.style.top = `${originalPosition.top + deltaY}px`;
+                
+                // 检测是否在任何塔上方
+                let foundTower = false;
+                towerEls.forEach((tower, index) => {
+                    // 移除之前的高亮
+                    if (index !== originalTower) {
+                        tower.classList.remove('tower-highlight', 'can-drop', 'cannot-drop');
+                    }
+                    
+                    const rect = tower.getBoundingClientRect();
+                    if (touch.clientX >= rect.left && 
+                        touch.clientX <= rect.right && 
+                        touch.clientY >= rect.top && 
+                        touch.clientY <= rect.bottom) {
+                        
+                        foundTower = true;
+                        lastTouchedTower = index;
+                        
+                        // 检查是否可以放置
+                        const canPlace = canPlaceDisk(originalTower, index);
+                        
+                        // 高亮当前塔
+                        if (index !== originalTower) {
+                            tower.classList.add(canPlace ? 'can-drop' : 'cannot-drop');
+                        }
+                    }
+                });
+                
+                if (!foundTower) {
+                    lastTouchedTower = null;
+                }
+                
+                e.preventDefault(); // 防止滚动
+            }, { passive: false });
+            
+            // 添加触摸结束事件（全局）
+            document.addEventListener('touchend', function(e) {
+                if (!touchDragging) return;
+                
+                // 移除拖动克隆
+                if (touchDragDisk && touchDragDisk.parentNode) {
+                    touchDragDisk.parentNode.removeChild(touchDragDisk);
+                }
+                
+                // 移除所有高亮
+                towerEls.forEach(tower => {
+                    tower.classList.remove('tower-highlight', 'can-drop', 'cannot-drop');
+                });
+                
+                // 如果有目标塔，尝试移动
+                if (lastTouchedTower !== null && lastTouchedTower !== originalTower) {
+                    moveDisk(originalTower, lastTouchedTower);
+                }
+                
+                // 重置状态
+                touchDragging = false;
+                touchDragDisk = null;
+                originalTower = null;
+                lastTouchedTower = null;
+            });
+        }
+
+        // 检查是否可以将盘子从源塔移动到目标塔
+        function canPlaceDisk(fromTower, toTower) {
+            // 检查源塔是否有盘子
+            if (towers[fromTower].length === 0) {
+                return false;
+            }
+            
+            // 获取要移动的盘子大小
+            const diskSize = towers[fromTower][towers[fromTower].length - 1];
+            
+            // 检查目标塔是否可以放置
+            if (towers[toTower].length > 0 && towers[toTower][towers[toTower].length - 1] < diskSize) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 修改原有的document.addEventListener('DOMContentLoaded')事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检测是否为移动设备
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // 针对移动设备的额外优化
+                document.body.classList.add('mobile-device');
+                
+                // 初始化触摸拖拽
+                initTouchDragEvents();
+                
+                // 阻止双击缩放
+                document.addEventListener('dblclick', function(e) {
+                    e.preventDefault();
+                }, { passive: false });
+                
+                // 禁用页面缩放
+                document.addEventListener('touchmove', function(e) {
+                    if (e.scale !== 1 && e.scale !== undefined) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+        });
+
+        // 游戏初始化完成后调用触摸事件初始化
+        window.addEventListener('load', function() {
+            // 初始化触摸拖拽
+            initTouchDragEvents();
+        });
     </script>
 </body>
 </html>
