@@ -484,7 +484,131 @@
         .tower.cannot-drop {
             background-color: rgba(231, 76, 60, 0.2);
         }
+
+        /* 排行榜样式 */
+        .leaderboard {
+            margin-top: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .leaderboard h3 {
+            color: #2c3e50;
+            text-align: center;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .leaderboard-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .leaderboard-tab {
+            padding: 8px 16px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .leaderboard-tab.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .leaderboard-tab:first-child {
+            border-radius: 5px 0 0 5px;
+        }
+        
+        .leaderboard-tab:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .leaderboard-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .leaderboard-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .leaderboard-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .current-user {
+            background-color: #e8f4fc !important;
+            font-weight: bold;
+        }
+        
+        .rank-1 .rank-cell {
+            background-color: gold;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .rank-2 .rank-cell {
+            background-color: silver;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .rank-3 .rank-cell {
+            background-color: #cd7f32;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .leaderboard-footer {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .leaderboard {
+                padding: 15px;
+            }
+            
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+            
+            .leaderboard-tab {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+        }
     </style>
+
+    <!-- 添加LeanCloud SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
 </head>
 <body>
     <h1>汉诺塔游戏</h1>
@@ -579,15 +703,52 @@
         <p>📱 触摸操作提示: 先点击要移动的柱子，再点击目标柱子</p>
     </div>
 
+    <div class="leaderboard" id="leaderboard">
+        <h3>汉诺塔挑战排行榜</h3>
+        <div class="leaderboard-tabs">
+            <div class="leaderboard-tab active" data-disks="3">3盘</div>
+            <div class="leaderboard-tab" data-disks="4">4盘</div>
+            <div class="leaderboard-tab" data-disks="5">5盘</div>
+            <div class="leaderboard-tab" data-disks="6">6盘</div>
+            <div class="leaderboard-tab" data-disks="7">7盘</div>
+        </div>
+        <div class="leaderboard-content">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>玩家</th>
+                        <th>步数</th>
+                        <th>用时</th>
+                        <th>完成日期</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center">加载中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="leaderboard-footer">
+            最佳记录将会自动提交。请公平游戏！
+        </div>
+    </div>
+
     <div id="victoryModal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title">恭喜 <span id="victoryPlayerName">你</span>！成功了！</h2>
             <p><span id="victoryPlayerName2">你</span>用了 <span id="finalMoves">0</span> 步完成了汉诺塔挑战！</p>
             <p>用时: <span id="finalTime">00:00</span></p>
             <p id="performanceMessage"></p>
+            
+            <!-- 添加成绩提交状态 -->
+            <p id="scoreSubmitStatus" style="color: #2980b9; font-weight: bold;"></p>
+            
             <div class="modal-buttons">
                 <button id="newGameBtn">新游戏</button>
                 <button id="increaseDisksBtn">增加难度</button>
+                <button id="viewLeaderboardBtn">查看排行榜</button>
             </div>
         </div>
     </div>
@@ -963,6 +1124,11 @@
             }
             
             performanceMessageEl.textContent = perfMessage;
+            
+            // 提交分数
+            document.getElementById('scoreSubmitStatus').textContent = '正在提交成绩...';
+            submitScore();
+            
             victoryModal.style.display = 'flex';
         }
 
@@ -1303,12 +1469,148 @@
                     }
                 }, { passive: false });
             }
+
+            // 加载排行榜
+            loadLeaderboard(3);
         });
 
         // 游戏初始化完成后调用触摸事件初始化
         window.addEventListener('load', function() {
             // 初始化触摸拖拽
             initTouchDragEvents();
+        });
+
+        // LeanCloud 初始化
+        AV.init({
+            appId: 'AGDWKZ8xlWjfvAg7OjqPT0Q3-gzGzoHsz', // 替换为你的 LeanCloud 应用 ID
+            appKey: 'plrVugpDFgKVJ4XLh2vxhftS', // 替换为你的 LeanCloud 应用 Key
+            serverURL: 'https://agdwkz8x.lc-cn-n1-shared.com' // 替换为你的 LeanCloud API 服务器地址
+        });
+        
+        // 排行榜相关变量
+        let currentLeaderboardDiskCount = 3;
+        const Score = AV.Object.extend('Score');
+        
+        // 提交分数到 LeanCloud
+        async function submitScore() {
+            if (!gameStarted || moveCount === 0) return;
+            
+            try {
+                const score = new Score();
+                
+                // 设置分数属性
+                score.set('playerName', playerName);
+                score.set('diskCount', disksCount);
+                score.set('moves', moveCount);
+                score.set('time', timerEl.textContent);
+                score.set('timeInSeconds', calculateTimeInSeconds(timerEl.textContent));
+                score.set('timestamp', new Date());
+                
+                // 保存分数
+                await score.save();
+                document.getElementById('scoreSubmitStatus').textContent = '成绩已提交至排行榜！';
+                
+                // 重新加载排行榜
+                loadLeaderboard(disksCount);
+            } catch (error) {
+                console.error('提交分数失败:', error);
+                document.getElementById('scoreSubmitStatus').textContent = '成绩提交失败，请稍后再试。';
+            }
+        }
+        
+        // 加载排行榜数据
+        async function loadLeaderboard(diskCount) {
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            leaderboardBody.innerHTML = '<tr><td colspan="5" style="text-align: center">加载中...</td></tr>';
+            currentLeaderboardDiskCount = diskCount;
+            
+            try {
+                // 创建查询
+                const query = new AV.Query('Score');
+                query.equalTo('diskCount', diskCount);
+                query.ascending('moves'); // 首先按步数升序
+                query.ascending('timeInSeconds'); // 然后按时间升序
+                query.limit(20); // 获取前20名
+                
+                // 执行查询
+                const scores = await query.find();
+                
+                // 更新排行榜UI
+                updateLeaderboardUI(scores);
+            } catch (error) {
+                console.error('加载排行榜失败:', error);
+                leaderboardBody.innerHTML = '<tr><td colspan="5" style="text-align: center">加载排行榜失败，请稍后再试。</td></tr>';
+            }
+        }
+        
+        // 更新排行榜UI
+        function updateLeaderboardUI(scores) {
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            
+            if (scores.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="5" style="text-align: center">暂无记录</td></tr>';
+                return;
+            }
+            
+            // 清空排行榜
+            leaderboardBody.innerHTML = '';
+            
+            // 添加分数行
+            scores.forEach((score, index) => {
+                const rank = index + 1;
+                const rowData = score.toJSON();
+                const date = new Date(rowData.timestamp);
+                const dateString = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                
+                // 创建行
+                const row = document.createElement('tr');
+                row.className = `rank-${rank}`;
+                
+                // 检查是否是当前玩家
+                if (rowData.playerName === playerName) {
+                    row.classList.add('current-user');
+                }
+                
+                // 设置行内容
+                row.innerHTML = `
+                    <td class="rank-cell">${rank}</td>
+                    <td>${rowData.playerName}</td>
+                    <td>${rowData.moves}</td>
+                    <td>${rowData.time}</td>
+                    <td>${dateString}</td>
+                `;
+                
+                leaderboardBody.appendChild(row);
+            });
+        }
+        
+        // 将时间字符串转换为秒数，用于排序
+        function calculateTimeInSeconds(timeString) {
+            const [minutes, seconds] = timeString.split(':').map(Number);
+            return minutes * 60 + seconds;
+        }
+        
+        // 切换排行榜标签
+        document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 移除所有活动标签类
+                document.querySelectorAll('.leaderboard-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // 为当前标签添加活动类
+                this.classList.add('active');
+                
+                // 加载相应的排行榜
+                const diskCount = parseInt(this.dataset.disks);
+                loadLeaderboard(diskCount);
+            });
+        });
+        
+        // 查看排行榜按钮
+        document.getElementById('viewLeaderboardBtn').addEventListener('click', function() {
+            victoryModal.style.display = 'none';
+            document.getElementById('leaderboard').scrollIntoView({ behavior: 'smooth' });
         });
     </script>
 </body>
