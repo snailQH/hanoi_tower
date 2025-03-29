@@ -1,0 +1,178 @@
+/* 移动端样式优化 */
+@media screen and (max-width: 768px) {
+    /* 导航栏 */
+    .mobile-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: #3498db;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .mobile-nav h1 {
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    .mobile-nav button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        padding: 5px 10px;
+    }
+
+    /* 游戏容器 */
+    .game-container {
+        padding: 10px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 数独板 */
+    .sudoku-board {
+        aspect-ratio: 1;
+        width: 100%;
+        max-width: 100vmin;
+        margin: 0 auto;
+    }
+
+    .cell {
+        font-size: 1.2rem;
+        touch-action: none;
+    }
+
+    /* 数字键盘 */
+    .number-pad {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 10px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+
+    .number-row {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 5px;
+    }
+
+    .number-btn {
+        width: 30%;
+        height: 45px;
+        font-size: 1.2rem;
+        margin: 2px;
+        border-radius: 8px;
+    }
+
+    /* 控制按钮 */
+    .controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .game-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 5px;
+    }
+
+    /* 统计信息 */
+    .stats {
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+
+    .stat {
+        min-width: 80px;
+        margin: 5px;
+    }
+
+    /* 设置面板 */
+    .settings-panel {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 80%;
+        height: 100%;
+        background: white;
+        transition: right 0.3s ease;
+        z-index: 1000;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    .settings-panel.active {
+        right: 0;
+    }
+
+    /* 排行榜 */
+    .leaderboard {
+        margin: 10px;
+        padding: 10px;
+    }
+
+    .leaderboard-tabs {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .leaderboard-tab {
+        flex: 1;
+        min-width: calc(50% - 5px);
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    /* 弹窗 */
+    .modal-content {
+        width: 90%;
+        max-width: 350px;
+        padding: 15px;
+    }
+
+    /* 页脚 */
+    .footer {
+        margin-bottom: 60px; /* 为固定的数字键盘留出空间 */
+        padding: 10px;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #ffffff;
+    }
+
+    .number-pad {
+        background: rgba(30, 30, 30, 0.95);
+    }
+
+    .settings-panel {
+        background: #1a1a1a;
+    }
+
+    .modal-content {
+        background: #1a1a1a;
+        color: #ffffff;
+    }
+}
+
+/* 触摸优化 */
+@media (hover: none) {
+    .number-btn:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    .cell:active {
+        background-color: rgba(52, 152, 219, 0.3);
+    }
+} 
