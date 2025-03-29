@@ -605,6 +605,28 @@
                 font-size: 14px;
             }
         }
+
+        /* 在CSS部分添加以下样式，优化小屏幕上的排行榜标签 */
+        @media (max-width: 600px) {
+            .leaderboard-tabs {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .leaderboard-tab {
+                flex-grow: 1;
+                text-align: center;
+                padding: 5px 8px;
+                font-size: 13px;
+                border-radius: 4px !important; /* 覆盖原来的左右圆角设置 */
+                margin: 2px;
+            }
+            
+            .leaderboard-tab:first-child,
+            .leaderboard-tab:last-child {
+                border-radius: 4px;
+            }
+        }
     </style>
 
     <!-- 添加LeanCloud SDK -->
@@ -711,6 +733,7 @@
             <div class="leaderboard-tab" data-disks="5">5盘</div>
             <div class="leaderboard-tab" data-disks="6">6盘</div>
             <div class="leaderboard-tab" data-disks="7">7盘</div>
+            <div class="leaderboard-tab" data-disks="8">8盘</div>
         </div>
         <div class="leaderboard-content">
             <table class="leaderboard-table">
@@ -732,6 +755,17 @@
         </div>
         <div class="leaderboard-footer">
             最佳记录将会自动提交。请公平游戏！
+        </div>
+    </div>
+
+    <!-- 新增页脚 -->
+    <div class="footer">
+        <div class="visitor-counter">
+            <span>累计访问: <span id="visitorCount" class="visitor-count">加载中...</span></span>
+        </div>
+        <div class="author-info">
+            <p>作者: <a href="https://github.com/snailQH" target="_blank">Qinghui Li</a></p>
+            <p>&copy; 2025 汉诺塔游戏</p>
         </div>
     </div>
 
@@ -1273,6 +1307,11 @@
                     }
                 }, { passive: false });
             }
+            // 加载排行榜
+            loadLeaderboard(3);
+            
+            // 更新访问计数
+            updateVisitorCount();
         });
 
         // 初始化游戏
@@ -1490,6 +1529,33 @@
         // 排行榜相关变量
         let currentLeaderboardDiskCount = 3;
         const Score = AV.Object.extend('Score');
+        
+        // 访问计数功能
+        async function updateVisitorCount() {
+            try {
+                // 查询Counter对象
+                const query = new AV.Query('Counter');
+                query.equalTo('name', 'visitorCount');
+                let counter = await query.first();
+                
+                // 如果不存在，则创建一个
+                if (!counter) {
+                    counter = new AV.Object('Counter');
+                    counter.set('name', 'visitorCount');
+                    counter.set('count', 0);
+                }
+                
+                // 增加计数
+                counter.increment('count');
+                await counter.save();
+                
+                // 显示访问次数
+                document.getElementById('visitorCount').textContent = counter.get('count');
+            } catch (error) {
+                console.error('更新访问计数失败:', error);
+                document.getElementById('visitorCount').textContent = '无法获取';
+            }
+        }
         
         // 提交分数到 LeanCloud
         async function submitScore() {
