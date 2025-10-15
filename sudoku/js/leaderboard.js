@@ -21,7 +21,7 @@
     const LEANCLOUD_CONFIG = {
         appId: "nKK1iiL13vVjKrEToTXrvrYS-MdYXbMMI",
         appKey: "tCdbaUwBHeMgXvln6NoqIb0X",
-        serverURL: "https://l0pefght.lc-cn-n1-shared.com"
+        serverURL: "https://nkk1iil1.api.lncldglobal.com"
     };
 
     // 排行榜类
