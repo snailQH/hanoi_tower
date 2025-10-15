@@ -17,10 +17,10 @@
         }
     };
 
-    // LeanCloud配置
+    // LeanCloud配置, appId: "l0pEfgHT7pBH9gxzqIaYmMlY-gzGzoHsz",appKey: "DOjFLuTJvqvLZGky8FSfMZjL",serverURL: "https://l0pefght.lc-cn-n1-shared.com"
     const LEANCLOUD_CONFIG = {
-        appId: "l0pEfgHT7pBH9gxzqIaYmMlY-gzGzoHsz",
-        appKey: "DOjFLuTJvqvLZGky8FSfMZjL",
+        appId: "nKK1iiL13vVjKrEToTXrvrYS-MdYXbMMI",
+        appKey: "tCdbaUwBHeMgXvln6NoqIb0X",
         serverURL: "https://l0pefght.lc-cn-n1-shared.com"
     };
 
